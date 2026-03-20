@@ -5,18 +5,28 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Atividade Web</title>
   <style>
-    body { font-family: Arial, sans-serif; margin: 24px; }
-    #main { max-width: 700px; margin: auto; }
-    button { font-size: 18px; padding: 16px 20px; margin: 8px; }
-    .activity-btn { background: #1976d2; color: white; border: none; cursor: pointer; }
-    .export-btn { background: #388e3c; color: white; border: none; cursor: pointer; margin-top: 12px; }
-    .answer { white-space: pre-wrap; margin-top: 12px; border: 1px solid #ccc; padding: 16px; }
+    body { font-family: Arial, sans-serif; margin: 0; background: #f7f7f7; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
+    #main { width: 100%; max-width: 700px; text-align: center; padding: 28px 20px 35px; box-sizing: border-box; background: #ffffff; box-shadow: 0 8px 24px rgba(0,0,0,0.12); border-radius: 14px; position: relative; }
+    #phrase-right { position: absolute; top: 14px; right: 16px; font-size: 14px; color: #555; font-weight: 700; }
+    #start-btn { font-size: 44px; padding: 28px 30px; margin: 24px auto; width: 100%; max-width: 640px; background: #1976d2; color: white; border: none; border-radius: 14px; cursor: pointer; font-weight: bold; box-shadow: 0 4px 12px rgba(0,0,0,0.2); }
+    button { font-size: 18px; padding: 16px 18px; margin: 8px; border-radius: 10px; }
+    .activity-btn { background: #1976d2; color: white; border: none; cursor: pointer; width: 48%; min-width: 130px; }
+    .export-btn { background: #388e3c; color: white; border: none; cursor: pointer; margin-top: 14px; width: 100%; max-width: 340px; }
+    .answer { white-space: pre-wrap; margin-top: 12px; border: 1px solid #ccc; padding: 16px; text-align: left; }
+    @media (max-width: 640px) {
+      #main { border-radius: 0; box-shadow: none; min-height: 100vh; justify-content: flex-start; padding: 20px; }
+      #start-btn { font-size: 40px; padding: 24px 18px; max-width: 95%; }
+      .activity-btn { width: 100%; margin-top: 8px; }
+      .answer { font-size: 16px; }
+      #phrase-right { position: static; margin-top: 8px; color: #333; }
+    }
   </style>
   <script src="https://cdn.jsdelivr.net/npm/file-saver@2.0.5/dist/FileSaver.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/docx@7.7.0/build/index.min.js"></script>
 </head>
 <body>
   <div id="main">
+    <div id="phrase-right">Vinicius ama Felipe</div>
     <h1>Atividades</h1>
     <button id="start-btn">CLIQUE AQUI</button>
 
@@ -80,23 +90,36 @@
 
     exportBtn.onclick = async () => {
       if (!selectedKey) return;
-      const { Document, Packer, Paragraph, TextRun } = window.docx;
-      const doc = new Document();
       const at = activities[selectedKey];
 
-      doc.addSection({
-        children: [
-          new Paragraph({ text: at.titulo, heading: window.docx.HeadingLevel.HEADING_1 }),
-          ...at.itens.flatMap((item, i) => [
-            new Paragraph({ text: `${i + 1}. Pergunta: ${item.pergunta}`, spacing: { after: 100 } }),
-            new Paragraph({ text: `Resposta: ${item.resposta}`, spacing: { after: 200 } })
-          ])
-        ]
-      });
+      const textBody = at.itens.map((item, i) => `${i + 1}. Pergunta: ${item.pergunta}\nResposta: ${item.resposta}`).join('\n\n');
 
-      const blob = await Packer.toBlob(doc);
-      saveAs(blob, `atividade_${selectedKey}.docx`);
-      alert('Arquivo exportado: atividade_' + selectedKey + '.docx');
+      try {
+        if (window.docx && window.docx.Packer) {
+          const { Document, Packer, Paragraph, HeadingLevel } = window.docx;
+          const doc = new Document();
+          doc.addSection({
+            children: [
+              new Paragraph({ text: at.titulo, heading: HeadingLevel.HEADING_1 }),
+              ...at.itens.flatMap((item, i) => [
+                new Paragraph({ text: `${i + 1}. Pergunta: ${item.pergunta}` }),
+                new Paragraph({ text: `Resposta: ${item.resposta}` }),
+              ])
+            ]
+          });
+
+          const blob = await Packer.toBlob(doc);
+          saveAs(blob, `atividade_${selectedKey}.docx`);
+          alert('Arquivo exportado: atividade_' + selectedKey + '.docx');
+          return;
+        }
+      } catch (err) {
+        console.warn('Erro docx:', err);
+      }
+
+      const fallbackBlob = new Blob([textBody], { type: 'text/plain;charset=utf-8' });
+      saveAs(fallbackBlob, `atividade_${selectedKey}.txt`);
+      alert('Exportação .docx falhou; arquivo .txt criado como fallback.');
     };
   </script>
 </body>
