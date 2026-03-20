@@ -95,8 +95,9 @@
       const textBody = at.itens.map((item, i) => `${i + 1}. Pergunta: ${item.pergunta}\nResposta: ${item.resposta}`).join('\n\n');
 
       try {
-        if (window.docx && window.docx.Packer) {
-          const { Document, Packer, Paragraph, HeadingLevel } = window.docx;
+        const docxLib = window.docx || window.Docx || (typeof docx !== 'undefined' ? docx : null);
+        if (docxLib && docxLib.Packer) {
+          const { Document, Packer, Paragraph, HeadingLevel } = docxLib;
           const doc = new Document();
           doc.addSection({
             children: [
@@ -113,6 +114,8 @@
           alert('Arquivo exportado: atividade_' + selectedKey + '.docx');
           return;
         }
+
+        console.warn('Biblioteca docx não encontrada no window. Fazendo fallback para TXT.');
       } catch (err) {
         console.warn('Erro docx:', err);
       }
