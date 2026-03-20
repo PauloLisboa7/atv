@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Atividade Web</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 24px; }
+    #main { max-width: 700px; margin: auto; }
+    button { font-size: 18px; padding: 16px 20px; margin: 8px; }
+    .activity-btn { background: #1976d2; color: white; border: none; cursor: pointer; }
+    .export-btn { background: #388e3c; color: white; border: none; cursor: pointer; margin-top: 12px; }
+    .answer { white-space: pre-wrap; margin-top: 12px; border: 1px solid #ccc; padding: 16px; }
+  </style>
+  <script src="https://cdn.jsdelivr.net/npm/file-saver@2.0.5/dist/FileSaver.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/docx@7.7.0/build/index.min.js"></script>
+</head>
+<body>
+  <div id="main">
+    <h1>Atividades</h1>
+    <button id="start-btn">CLIQUE AQUI</button>
+
+    <div id="activity-selection" style="display:none;">
+      <p>Escolha uma atividade:</p>
+      <button class="activity-btn" data-key="1">Atividade 1</button>
+      <button class="activity-btn" data-key="2">Atividade 2</button>
+    </div>
+
+    <div id="output" style="display:none;">
+      <h2 id="activity-title"></h2>
+      <div id="answers" class="answer"></div>
+      <button id="export-btn" class="export-btn">Exportar para Word</button>
+    </div>
+  </div>
+
+  <script>
+    const activities = {
+      1: {
+        titulo: 'Atividade 1',
+        itens: [
+          { pergunta: 'O que você entende por bem-estar pessoal? Você acredita que cuida bem de si mesmo?', resposta: 'Bem-estar pessoal é estar bem comigo mesmo, tanto fisicamente quanto mentalmente e emocionalmente. Envolve cuidar da saúde, ter equilíbrio entre estudo, lazer e descanso, além de manter uma boa autoestima.' },
+          { pergunta: 'Quais fatores mais influenciam o bem-estar dos jovens atualmente?', resposta: 'Os principais fatores são as redes sociais, pressão escolar e familiar, amizades, ambiente em que vivem e questões emocionais como ansiedade e insegurança.' },
+          { pergunta: 'Como as redes sociais podem afetar positiva e negativamente a saúde emocional?', resposta: 'Positivamente, ajudam na comunicação, aprendizado e entretenimento. Negativamente podem causar comparação excessiva, baixa autoestima, ansiedade e dependência.' },
+          { pergunta: 'Você considera suas relações sociais saudáveis? Por quê?', resposta: 'Sim, pois procuro manter amizades baseadas no respeito, apoio e confiança, além de evitar conflitos desnecessários.' },
+          { pergunta: 'O que pode ser feito para melhorar o bem-estar social entre os jovens?', resposta: 'Promover mais diálogo, respeito às diferenças, atividades em grupo, apoio emocional e ambientes acolhedores na escola e na comunidade.' },
+          { pergunta: 'Quais atitudes você pode adotar no dia a dia para cuidar melhor da sua saúde física, mental e emocional?', resposta: 'Praticar exercícios, manter uma boa alimentação, dormir bem, evitar excesso de redes sociais, organizar a rotina e buscar momentos de lazer e descanso.' }
+        ]
+      },
+      2: {
+        titulo: 'Atividade 2',
+        itens: [ { pergunta: 'Quanto é 7 x 8?', resposta: '56' } ]
+      }
+    };
+
+    const startBtn = document.getElementById('start-btn');
+    const activitySelection = document.getElementById('activity-selection');
+    const output = document.getElementById('output');
+    const activityTitle = document.getElementById('activity-title');
+    const answers = document.getElementById('answers');
+    const exportBtn = document.getElementById('export-btn');
+
+    let selectedKey = null;
+
+    startBtn.onclick = () => {
+      startBtn.style.display = 'none';
+      activitySelection.style.display = 'block';
+    };
+
+    document.querySelectorAll('.activity-btn').forEach(btn => {
+      btn.onclick = () => {
+        selectedKey = btn.dataset.key;
+        const at = activities[selectedKey];
+        activityTitle.innerText = at.titulo;
+
+        answers.innerHTML = at.itens.map((item, i) => `${i + 1}. Pergunta: ${item.pergunta}\nResposta: ${item.resposta}`).join('\n\n');
+
+        output.style.display = 'block';
+      };
+    });
+
+    exportBtn.onclick = async () => {
+      if (!selectedKey) return;
+      const { Document, Packer, Paragraph, TextRun } = window.docx;
+      const doc = new Document();
+      const at = activities[selectedKey];
+
+      doc.addSection({
+        children: [
+          new Paragraph({ text: at.titulo, heading: window.docx.HeadingLevel.HEADING_1 }),
+          ...at.itens.flatMap((item, i) => [
+            new Paragraph({ text: `${i + 1}. Pergunta: ${item.pergunta}`, spacing: { after: 100 } }),
+            new Paragraph({ text: `Resposta: ${item.resposta}`, spacing: { after: 200 } })
+          ])
+        ]
+      });
+
+      const blob = await Packer.toBlob(doc);
+      saveAs(blob, `atividade_${selectedKey}.docx`);
+      alert('Arquivo exportado: atividade_' + selectedKey + '.docx');
+    };
+  </script>
+</body>
+</html>
